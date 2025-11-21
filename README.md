@@ -1,7 +1,10 @@
 # LinkedIn-automation-workflow
-A workflow developed in n8n to be shared
+
+A comprehensive description of "Linkedin Automation Workflow"
+
 🟢 Node 1 – On Form Submission
 Purpose: Starts the workflow whenever a new form is submitted. The user provides a LinkedIn post topic and target audience.
+
 🟢  Node 2 – Content Researcher (AI Agent)
 Purpose: This AI agent researches topics and creates professional, engaging LinkedIn posts using real-time data from the internet. It connects to Google Gemini for writing.
 🟢  Node 3 – Image Generator (AI Agent)
