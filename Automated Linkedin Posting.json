@@ -1,0 +1,224 @@
+{
+  "name": "Automated Linkedin Posting",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Linkedin Post Creater",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Post Topic"
+            },
+            {
+              "fieldLabel": "Target Audience"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -656,
+        -96
+      ],
+      "id": "2b7020a6-2218-4e39-960d-57ce1052c1bf",
+      "name": "On form submission",
+      "webhookId": "e042f540-a485-490e-9386-dc9b7a39faff"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -360,
+        128
+      ],
+      "id": "30a0ffdb-8956-489a-89f1-8a8fd5417b98",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "scB1VveyQm3FRxSe",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Post Topic:{{ $json['Post Topic'] }}\nTarget Audience:{{ $json['Target Audience'] }}",
+        "options": {
+          "systemMessage": "## Overview\n\nYou are an AI agent specialized in creating professional, educational, and engaging LinkedIn posts based on any topic provided by the user.\n\n## Objectives\n\nAlways begin by conducting a real-time search using the Tavily tool to gather the most accurate, up-to-date information on the topic. The post should be written to appeal to the provided target audience.\nBased on your research, generate a well-structured LinkedIn post that:\n- Starts with an engaging hook\n- Professional in tone\n- Clear and easy to read\n- Educational and insightful\n- Light on emojis (use only when highly relevant and minimal)\n- Includes proper source attribution (e.g., “according to [source]”)\n- Contains relevant hashtags to improve visibility\n- Ends with a clear call to action (e.g., asking for thoughts, feedback, or shares)\n\n## Output Instructions\n\n- Your ONLY output should be the final LinkedIn post text.\n- Do not include explanations, notes, or anything beyond the post itself.\n\n## Example Workflow\n\n1. Receive a topic (e.g., “The ROI of warehouse automation”)\n2. Use Tavily to search and gather recent information or case studies\n3. Draft a LinkedIn post using that research\n4. Format it with source citations, clean structure, optional hashtags, and a call to actionu are a helpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -432,
+        -96
+      ],
+      "id": "7acc8aab-f2a6-4670-8f6a-c4bd147ce1a7",
+      "name": "Content Researcher"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Linkedin Post: {{ $json.output }}",
+        "options": {
+          "systemMessage": "You are an AI agent that transforms LinkedIn posts into visual prompt descriptions for\ngenerating graphic marketing materials.\n\nObjective\n\n- Analyze the LinkedIn post.\n- Identify the main insight or message.\n- Create a professional graphic prompt for AI image generation.\n\nOutput only the image prompt. Do not repeat the post or add explanations.\nStyle Guidelines:\n- Use abstract shapes, icons, gradients, typography, and layout ideas.\n- Avoid literal or hyperrealistic scenes.\n- Keep it modern, clean, and professional.\n\nExample:\n\nA modern flat-style graphic showing a human brain connected to mechanical gears,\nrepresenting the fusion of AI and automation. Minimalist background, soft gradients, clean\nsans-serif text placement space at the top.You are a helpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -80,
+        -96
+      ],
+      "id": "ac667b76-0632-4d91-877e-e6e8cfe4ce4f",
+      "name": "Image Generator"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Accept",
+              "value": "image/png"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "inputs",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "generated_image.png"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        -96
+      ],
+      "id": "f2d54ebb-88a6-4c73-8a28-7c7b26e57ef5",
+      "name": "Huggingface Image Generator"
+    },
+    {
+      "parameters": {
+        "person": "Nik3B5wH00",
+        "text": "={{ $('Content Researcher').item.json.output }}",
+        "shareMediaCategory": "IMAGE",
+        "binaryPropertyName": "generated_image.png",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        496,
+        -96
+      ],
+      "id": "be895f22-7544-4888-a1ff-3f39c7ce5e02",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "FEWL6xSmMKYfHA7L",
+          "name": "LinkedIn account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Content Researcher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Content Researcher",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Image Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Researcher": {
+      "main": [
+        [
+          {
+            "node": "Image Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Generator": {
+      "main": [
+        [
+          {
+            "node": "Huggingface Image Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Huggingface Image Generator": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "06b25132-1704-49fd-bf1a-1cddf805b73c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e57b2854b9dcd66fac5297435a88133b2a914d0dca7a28fcea92bdb5a1afafec"
+  },
+  "id": "RMD5uo82nHiBOOeB",
+  "tags": []
+}
